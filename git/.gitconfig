@@ -82,3 +82,9 @@
 	# 이동된 코드를 다른 색상으로 표시
 	# 삭제 후 다른 위치에 추가된 코드를 "이동됨"으로 인식하여 구분
 	colorMoved = default
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
