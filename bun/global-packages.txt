@@ -1,5 +1,14 @@
-# Bun global packages
-# Install with: xargs bun add -g < global-packages.txt
+# ==============================================================================
+# bun 글로벌 패키지 목록
+# ==============================================================================
+# install.sh 에서 이 파일을 읽어 'bun add -g <package>' 로 설치한다.
+# 패키지를 추가하려면 이 파일에 한 줄씩 추가 후 install.sh 를 다시 실행한다.
+#
+# 글로벌 패키지는 ~/.bun/bin/ 에 설치되며, PATH에 포함되어 어디서든 실행 가능하다.
+# 설치된 패키지 확인: bun pm ls -g
+# ==============================================================================
 
-opencode-ai
-eas-cli
+# Claude Code: Anthropic 공식 AI 코딩 어시스턴트 CLI
+# 설치 후 'claude' 명령으로 실행
+# 초기 인증: claude login (브라우저 OAuth) 또는 ANTHROPIC_API_KEY 환경 변수 설정
+@anthropic-ai/claude-code

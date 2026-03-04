@@ -1,13 +1,35 @@
 # ==============================================================================
-# mise Global Configuration
+# mise 글로벌 설정
 # ==============================================================================
-# This file defines global tool versions managed by mise.
-# Project-specific versions can override these in local .mise.toml files.
+# 이 파일은 dotfiles/mise/.mise.toml 에 있으며, ~/.mise.toml 로 심볼릭 링크된다.
+# 여기서 정의된 버전은 글로벌 기본값으로 사용된다.
+# 프로젝트별 .mise.toml 이 있으면 해당 버전이 자동으로 우선 적용된다.
+#
+# mise는 nvm, rbenv, pyenv, volta 등을 대체하는 통합 버전 매니저다.
+# .zshrc 에서 'eval "$(mise activate zsh)"' 로 초기화되며,
+# 디렉토리 이동 시 .mise.toml 을 자동으로 감지하여 버전을 전환한다.
+#
+# 사용 방법:
+#   mise install          # 이 파일에 정의된 모든 도구 설치
+#   mise list             # 설치된 도구 및 현재 버전 확인
+#   mise use node@20      # 현재 디렉토리의 .mise.toml 에 버전 추가
+#   mise use -g node@lts  # 글로벌 버전 변경
+# ==============================================================================
 
 [tools]
+# Node.js: LTS(Long-Term Support) 최신 버전을 사용
+# lts 키워드는 항상 현재 LTS 버전을 가리킴 (예: 20.x, 22.x)
 node = "lts"
+
+# Bun: 최신 버전의 JavaScript 런타임 + 패키지 매니저 + 빌드 도구
+# Node.js보다 빠르며, npm/yarn/pnpm 대체 가능
 bun = "latest"
+
+# pnpm: 디스크 공간 효율적인 Node.js 패키지 매니저
+# 패키지를 전역 저장소에 한 번만 저장하고 링크 방식으로 사용
 pnpm = "latest"
 
 [settings]
+# experimental: 실험적 기능 활성화
+# mise의 일부 편의 기능(자동 신뢰 등)이 experimental로 제공됨
 experimental = true
