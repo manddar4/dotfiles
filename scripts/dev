@@ -12,9 +12,10 @@
 #   tmux session: dev_<session-name>                  ← tmux 세션
 #
 # 각 세션의 tmux 창 구성:
-#   1. code  : claude (Claude Code AI 어시스턴트)
-#   2. git   : lazygit (git TUI)
-#   3. term  : 일반 셸 (명령 실행용)
+#   1. code    : claude (Claude Code AI 어시스턴트)
+#   2. gemini  : gemini (Gemini CLI 어시스턴트)
+#   3. term    : 일반 셸 (명령 실행용)
+#   4. git     : lazygit (git TUI)
 #
 # 사용법:
 #   dev                     # 현재 디렉토리에서 세션 시작 (worktree 없음)
@@ -392,12 +393,16 @@ fi
 tmux new-session -d -s "$TMUX_SESSION" -n "code" -c "$TARGET_PATH"
 tmux send-keys -t "=$TMUX_SESSION:code" "claude" Enter
 
-# 창 2: git - lazygit TUI 실행
-tmux new-window -t "=$TMUX_SESSION" -n "git" -c "$TARGET_PATH"
-tmux send-keys -t "=$TMUX_SESSION:git" "lazygit" Enter
+# 창 2: gemini - Gemini CLI 어시스턴트 실행
+tmux new-window -t "=$TMUX_SESSION" -n "gemini" -c "$TARGET_PATH"
+tmux send-keys -t "=$TMUX_SESSION:gemini" "gemini" Enter
 
 # 창 3: term - 빈 셸 (일반 명령 실행용)
 tmux new-window -t "=$TMUX_SESSION" -n "term" -c "$TARGET_PATH"
+
+# 창 4: git - lazygit TUI 실행
+tmux new-window -t "=$TMUX_SESSION" -n "git" -c "$TARGET_PATH"
+tmux send-keys -t "=$TMUX_SESSION:git" "lazygit" Enter
 
 # code 창을 첫 번째로 포커스한 상태로 세션에 attach
 tmux select-window -t "=$TMUX_SESSION:code"
