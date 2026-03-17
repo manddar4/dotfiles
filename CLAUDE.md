@@ -29,7 +29,7 @@ Configurations are symlinked into place:
 
 The core workflow tool — integrates tmux + git worktrees for isolated development sessions.
 
-Each session creates a git worktree under `.worktrees/<repo>/<name>/` and a tmux session with 3 windows: `code` (claude), `git` (lazygit), `term` (shell).
+Each session creates a git worktree under `.worktrees/<repo>/<name>/` and a tmux session with 4 windows: `code` (claude), `gemini` (gemini), `term` (shell), `git` (lazygit).
 
 ```bash
 dev              # Start session in current directory (no worktree)
