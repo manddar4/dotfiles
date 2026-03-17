@@ -123,6 +123,8 @@ alias lg='lazygit'   # lazygit TUI
 if command -v mise &> /dev/null; then
     eval "$(mise activate zsh)"
 fi
+# mise shims를 PATH 맨 앞에 추가 (Windows npm 등보다 우선)
+export PATH="$HOME/.local/share/mise/shims:$PATH"
 
 # ==============================================================================
 # bun 자동완성
@@ -136,6 +138,6 @@ fi
 # 반드시 파일의 가장 마지막에 위치해야 한다.
 # ZSH_THEME=""로 Oh My Zsh 테마를 비활성화했으므로 충돌 없이 동작한다.
 # 프롬프트 형식은 dotfiles/starship/starship.toml 에서 설정한다.
-eval "$(starship init zsh)"
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if command -v starship &> /dev/null; then
+    eval "$(starship init zsh)"
+fi

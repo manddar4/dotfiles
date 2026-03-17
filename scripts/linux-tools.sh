@@ -16,8 +16,8 @@
 #   [tar.gz]        lazygit v0.44.1
 #   [apt 공식 저장소] gh (GitHub CLI)
 #   [바이너리]       yq v4.44.3
-#   [curl 설치]     mise (버전 매니저)
-#   [git clone]     fzf-tab, zsh-autosuggestions, TPM
+#   [curl 설치]     mise (버전 매니저), starship (프롬프트)
+#   [git clone]     fzf, fzf-tab, Oh My Zsh, zsh-autosuggestions, TPM
 # ==============================================================================
 
 set -e  # 오류 발생 시 즉시 종료
@@ -232,7 +232,49 @@ else
 fi
 
 # ==============================================================================
-# 9. fzf-tab (zsh 플러그인, git clone)
+# 9. fzf (퍼지 파인더)
+# ==============================================================================
+# fzf는 명령줄 퍼지 파인더로, Ctrl+R(히스토리), Ctrl+T(파일), Alt+C(디렉토리)
+# 키 바인딩을 제공한다. ~/.fzf 에 git clone으로 설치하고, install.sh에서
+# ~/.fzf/install 을 실행하여 ~/.fzf.zsh 키 바인딩 파일을 생성한다.
+if [[ ! -d "$HOME/.fzf" ]]; then
+    echo "==> Installing fzf..."
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    echo "    fzf cloned (key bindings will be installed by install.sh)"
+else
+    echo "==> fzf already installed"
+fi
+
+# ==============================================================================
+# 10. Oh My Zsh
+# ==============================================================================
+# Oh My Zsh는 zsh 설정 프레임워크로, 플러그인·테마 관리를 담당한다.
+# RUNZSH=no : 설치 후 zsh로 자동 전환하지 않음 (스크립트 계속 실행)
+# CHSH=no   : 기본 쉘을 자동으로 변경하지 않음
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+    echo "==> Installing Oh My Zsh..."
+    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    echo "    Oh My Zsh installed"
+else
+    echo "==> Oh My Zsh already installed"
+fi
+
+# ==============================================================================
+# 11. starship (프롬프트)
+# ==============================================================================
+# starship은 빠르고 커스터마이즈 가능한 크로스 쉘 프롬프트다.
+# .zshrc 에서 eval "$(starship init zsh)" 으로 활성화된다.
+# 설정은 dotfiles/starship/starship.toml → ~/.config/starship.toml 로 링크됨.
+if ! command -v starship &> /dev/null; then
+    echo "==> Installing starship..."
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    echo "    starship installed"
+else
+    echo "==> starship already installed"
+fi
+
+# ==============================================================================
+# 12. fzf-tab (zsh 플러그인, git clone)
 # ==============================================================================
 # fzf-tab은 zsh의 기본 Tab 자동완성 UI를 fzf 인터페이스로 교체한다.
 # Homebrew로 설치할 수 없어 git clone으로 설치한다.
@@ -247,7 +289,7 @@ else
 fi
 
 # ==============================================================================
-# 10. zsh-autosuggestions (Oh My Zsh 커스텀 플러그인, git clone)
+# 13. zsh-autosuggestions (Oh My Zsh 커스텀 플러그인, git clone)
 # ==============================================================================
 # 히스토리 기반으로 명령어를 회색 텍스트로 미리 제안한다.
 # → 방향키 오른쪽(→) 또는 Ctrl+F 로 제안 수락
@@ -262,7 +304,7 @@ else
 fi
 
 # ==============================================================================
-# 11. TPM (Tmux Plugin Manager, git clone)
+# 14. TPM (Tmux Plugin Manager, git clone)
 # ==============================================================================
 # TPM은 tmux 플러그인을 관리하는 도구다.
 # tmux 내에서 Ctrl+a → I 로 .tmux.conf 에 정의된 플러그인을 설치한다.
