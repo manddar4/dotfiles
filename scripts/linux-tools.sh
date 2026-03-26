@@ -9,7 +9,7 @@
 #
 # Linux 전용 설치 목록 (apt, .deb, 바이너리 등):
 #   [apt]           build-essential, curl, wget, unzip, tree, xclip,
-#                   fd-find, bat, ripgrep
+#                   fontconfig, fd-find, bat, ripgrep
 #   [GitHub 릴리즈] Neovim stable (AppImage)
 #   [apt 공식 저장소] eza (eza-community)
 #   [.deb 패키지]   git-delta v0.18.2
@@ -17,6 +17,7 @@
 #   [apt 공식 저장소] gh (GitHub CLI)
 #   [바이너리]       yq v4.44.3
 #   [curl 설치]     mise (버전 매니저)
+#   [GitHub 릴리즈] JetBrainsMono Nerd Font v3.3.0
 #
 # 공통 도구 (common-tools.sh에서 설치):
 #   [curl 설치]     starship (프롬프트)
@@ -63,6 +64,7 @@ sudo apt-get install -y \
     xclip \
     zsh \
     git \
+    fontconfig \
     fd-find \
     bat \
     ripgrep
@@ -245,6 +247,30 @@ else
 fi
 
 # ==============================================================================
+# 9. JetBrainsMono Nerd Font
+# ==============================================================================
+# Starship, tmux, LazyVim 등이 Nerd Font 전용 글리프를 사용하므로 반드시 필요하다.
+# GitHub 릴리즈에서 tar.xz를 다운받아 ~/.local/share/fonts/ 에 설치한다.
+#
+# 주의 (WSL2): 실제 렌더링은 Windows Terminal이 담당하므로,
+#   이 설치는 네이티브 Linux 터미널(Alacritty, Kitty 등) 용이다.
+#   WSL2에서 Windows Terminal 글리프를 고치려면 install-windows.ps1 도 실행해야 한다.
+NERD_FONT_VERSION="v3.3.0"
+FONT_DIR="$HOME/.local/share/fonts"
+if fc-list | grep -qi "JetBrainsMono"; then
+    echo "==> JetBrainsMono Nerd Font already installed"
+else
+    echo "==> Installing JetBrainsMono Nerd Font $NERD_FONT_VERSION..."
+    mkdir -p "$FONT_DIR"
+    curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/download/${NERD_FONT_VERSION}/JetBrainsMono.tar.xz" \
+        -o /tmp/JetBrainsMono.tar.xz
+    tar -xf /tmp/JetBrainsMono.tar.xz -C "$FONT_DIR"
+    rm -f /tmp/JetBrainsMono.tar.xz
+    fc-cache -fv > /dev/null
+    echo "    JetBrainsMono Nerd Font installed"
+fi
+
+# ==============================================================================
 # 공통 도구 설치 (Oh My Zsh, fzf, starship, fzf-tab, zsh-autosuggestions, TPM)
 # ==============================================================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -260,4 +286,8 @@ echo "    참고: Neovim AppImage 실행이 안 될 경우 수동 추출:"
 echo "      ~/.local/bin/nvim.appimage --appimage-extract"
 echo "      mv \$HOME/.local/squashfs-root \$HOME/.local/nvim-extracted"
 echo "      ln -sf \$HOME/.local/nvim-extracted/usr/bin/nvim \$HOME/.local/bin/nvim"
+echo ""
+echo "    WSL2 사용자 주의: 글리프(아이콘)를 올바르게 표시하려면"
+echo "      Windows 쪽에서도 install-windows.ps1 을 실행하여"
+echo "      JetBrainsMono Nerd Font를 Windows에 설치해야 합니다."
 echo ""

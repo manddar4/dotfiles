@@ -100,6 +100,18 @@ else
 fi
 
 # ==============================================================================
+# 2-2. JetBrainsMono Nerd Font (cask)
+# ==============================================================================
+# Starship, tmux, LazyVim 등이 Nerd Font 전용 글리프를 사용하므로 반드시 필요하다.
+# macOS는 ~/Library/Fonts/ 에 설치되며, 터미널 앱(Ghostty 등)에서 폰트 선택 가능.
+if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+    echo "==> [brew cask] Installing JetBrainsMono Nerd Font..."
+    brew install --cask font-jetbrains-mono-nerd-font
+else
+    echo "==> JetBrainsMono Nerd Font already installed"
+fi
+
+# ==============================================================================
 # 3. mise (버전 매니저)
 # ==============================================================================
 # mise는 Node.js, Bun, pnpm 등 언어 런타임의 버전을 관리한다.

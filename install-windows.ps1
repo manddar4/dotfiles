@@ -65,7 +65,18 @@ foreach ($tool in $tools) {
     }
 }
 
-# 4. mise 설정
+# 4. JetBrainsMono Nerd Font
+# Starship, tmux, LazyVim 등이 Nerd Font 전용 글리프를 사용하므로 반드시 필요하다.
+# nerd-fonts 버킷은 위 2번 단계에서 이미 추가되어 있다.
+Write-Host "==> Installing JetBrainsMono Nerd Font..."
+if (-not (scoop list | Select-String "JetBrainsMono-NF")) {
+    scoop install JetBrainsMono-NF
+    Write-Host "    JetBrainsMono Nerd Font installed"
+} else {
+    Write-Host "    JetBrainsMono Nerd Font already installed"
+}
+
+# 5. mise 설정
 Write-Host "==> Setting up mise..."
 Create-Symlink "$DotfilesDir\mise\.mise.toml" "$env:USERPROFILE\.mise.toml"
 if (Get-Command mise -ErrorAction SilentlyContinue) {
@@ -74,7 +85,7 @@ if (Get-Command mise -ErrorAction SilentlyContinue) {
     mise settings set trusted_config_paths "~/workspaces"
 }
 
-# 5. bun 글로벌 패키지
+# 6. bun 글로벌 패키지
 Write-Host "==> Installing bun global packages..."
 if (Get-Command bun -ErrorAction SilentlyContinue) {
     Get-Content "$DotfilesDir\bun\global-packages.txt" | ForEach-Object {
@@ -86,7 +97,7 @@ if (Get-Command bun -ErrorAction SilentlyContinue) {
     }
 }
 
-# 6. 심볼릭 링크 생성
+# 7. 심볼릭 링크 생성
 Write-Host "==> Creating symbolic links..."
 
 # Git 설정
@@ -106,7 +117,7 @@ if ((Test-Path $PROFILE) -and -not ((Get-Item $PROFILE).Attributes -band [IO.Fil
 }
 Create-Symlink "$DotfilesDir\powershell\profile.ps1" $PROFILE
 
-# 7. gitconfig.local 생성
+# 8. gitconfig.local 생성
 Write-Host "==> Setting up gitconfig.local..."
 $gitconfigLocal = "$env:USERPROFILE\.gitconfig.local"
 if (-not (Test-Path $gitconfigLocal)) {
@@ -127,7 +138,7 @@ if (-not (Test-Path $gitconfigLocal)) {
     Write-Host "    Created $gitconfigLocal (edit name/email)"
 }
 
-# 8. Windows Terminal 설정 (존재하면)
+# 9. Windows Terminal 설정 (존재하면)
 $wtSettingsDir = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState"
 if (Test-Path $wtSettingsDir) {
     Write-Host "==> Windows Terminal settings found"
