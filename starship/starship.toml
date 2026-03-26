@@ -7,7 +7,7 @@
 # Starship은 Oh My Zsh의 ZSH_THEME=""와 함께 사용된다.
 # .zshrc 맨 아래에서 'eval "$(starship init zsh)"' 로 초기화된다.
 #
-# 현재 설정: Gruvbox Dark 팔레트 기반 세그먼트형 프롬프트
+# 현재 설정: Dracula 팔레트 기반 세그먼트형 프롬프트
 #   OS 아이콘 → 사용자명 → 디렉토리 → git 브랜치 → 언어 버전 → 도커 → 시간
 # ==============================================================================
 
@@ -50,23 +50,24 @@ $time\
 $line_break$character"""
 
 # ==============================================================================
-# 색상 팔레트: Gruvbox Dark
+# 색상 팔레트: Dracula
 # ==============================================================================
-# Gruvbox는 따뜻한 계열의 레트로 컬러 팔레트로, 눈의 피로를 줄이는 것으로 유명하다.
+# Dracula는 어두운 배경에 선명한 색상을 조합한 팔레트로,
+# 프로젝트 전체(tmux, fzf, delta, Windows Terminal 등)에서 통일하여 사용한다.
 # 각 색상 이름은 위 format 문자열의 bg:/fg: 에서 참조된다.
-palette = 'gruvbox_dark'
+palette = 'dracula'
 
-[palettes.gruvbox_dark]
-color_fg0 = '#fbf1c7'    # 전경(텍스트) 기본색: 크림색
-color_bg1 = '#3c3836'    # 배경 어두운 계열 1 (시간 세그먼트)
-color_bg3 = '#665c54'    # 배경 어두운 계열 3 (도커/콘다 세그먼트)
-color_blue = '#458588'   # 파란색 (언어 버전 세그먼트)
-color_aqua = '#689d6a'   # 청록색 (git 세그먼트)
-color_green = '#98971a'  # 녹색 (성공 커서)
-color_orange = '#d65d0e' # 주황색 (OS/사용자 세그먼트)
-color_purple = '#b16286' # 보라색 (vim replace 모드 커서)
-color_red = '#cc241d'    # 빨간색 (에러 커서)
-color_yellow = '#d79921' # 노란색 (디렉토리 세그먼트)
+[palettes.dracula]
+color_fg0 = '#f8f8f2'    # Foreground (텍스트 기본색)
+color_bg1 = '#282a36'    # Background (시간 세그먼트)
+color_bg3 = '#44475a'    # Current Line (도커/콘다 세그먼트)
+color_blue = '#8be9fd'   # Cyan (언어 버전 세그먼트)
+color_aqua = '#50fa7b'   # Green (git 세그먼트)
+color_green = '#50fa7b'  # Green (성공 커서)
+color_orange = '#ffb86c' # Orange (OS/사용자 세그먼트)
+color_purple = '#bd93f9' # Purple (vim replace 모드 커서)
+color_red = '#ff5555'    # Red (에러 커서)
+color_yellow = '#f1fa8c' # Yellow (디렉토리 세그먼트)
 
 # ==============================================================================
 # OS 아이콘 세그먼트
@@ -216,11 +217,11 @@ format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 [docker_context]
 symbol = ""
 style = "bg:color_bg3"
-format = '[[ $symbol( $context) ](fg:#83a598 bg:color_bg3)]($style)'
+format = '[[ $symbol( $context) ](fg:#8be9fd bg:color_bg3)]($style)'
 
 [conda]
 style = "bg:color_bg3"
-format = '[[ $symbol( $environment) ](fg:#83a598 bg:color_bg3)]($style)'
+format = '[[ $symbol( $environment) ](fg:#8be9fd bg:color_bg3)]($style)'
 
 [pixi]
 style = "bg:color_bg3"

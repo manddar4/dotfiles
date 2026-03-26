@@ -173,6 +173,8 @@ if command -v mise &> /dev/null; then
     echo "==> Installing mise tools (node, bun, pnpm)..."
     mise install
     mise trust "$HOME/.mise.toml"
+    # mise shims를 PATH에 추가하여 이후 bun 등 mise로 설치한 도구를 사용 가능하게 함
+    export PATH="$HOME/.local/share/mise/shims:$PATH"
     # ~/workspaces 하위 프로젝트의 .mise.toml도 자동 신뢰
     mise settings set trusted_config_paths "~/workspaces"
 else
