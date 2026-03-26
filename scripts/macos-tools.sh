@@ -25,14 +25,31 @@ echo "==> Installing macOS tools..."
 # Apple Silicon(M1/M2/M3)과 Intel Mac에서 설치 경로가 다르다.
 #   Apple Silicon : /opt/homebrew/bin/brew
 #   Intel Mac     : /usr/local/bin/brew
+
+# Homebrew 경로 결정
+BREW_PATH=""
+if [[ -f "/opt/homebrew/bin/brew" ]]; then
+    BREW_PATH="/opt/homebrew/bin/brew"
+elif [[ -f "/usr/local/bin/brew" ]]; then
+    BREW_PATH="/usr/local/bin/brew"
+fi
+
 if ! command -v brew &>/dev/null; then
     echo "==> Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    # Apple Silicon vs Intel path
-    if [[ -f "/opt/homebrew/bin/brew" ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -f "/usr/local/bin/brew" ]]; then
-        eval "$(/usr/local/bin/brew shellenv)"
+
+    # 설치 후 경로 다시 확인
+    if [[ -z "$BREW_PATH" ]]; then
+        if [[ -f "/opt/homebrew/bin/brew" ]]; then
+            BREW_PATH="/opt/homebrew/bin/brew"
+        elif [[ -f "/usr/local/bin/brew" ]]; then
+            BREW_PATH="/usr/local/bin/brew"
+        fi
+    fi
+
+    # 현재 스크립트에서 사용할 수 있도록 PATH 추가
+    if [[ -n "$BREW_PATH" ]]; then
+        eval "$("$BREW_PATH" shellenv)"
     fi
 else
     echo "==> Homebrew already installed"

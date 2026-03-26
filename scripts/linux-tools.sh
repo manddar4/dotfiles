@@ -62,6 +62,7 @@ sudo apt-get install -y \
     tree \
     xclip \
     zsh \
+    git \
     fd-find \
     bat \
     ripgrep

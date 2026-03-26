@@ -177,8 +177,12 @@ if command -v mise &> /dev/null; then
     echo "==> Installing mise tools (node, bun, pnpm)..."
     mise install
     mise trust "$HOME/.mise.toml"
+
     # mise shims를 PATH에 추가하여 이후 bun 등 mise로 설치한 도구를 사용 가능하게 함
+    # mise activate를 평가하여 완전한 환경 설정 보장
+    eval "$(mise activate bash)"
     export PATH="$HOME/.local/share/mise/shims:$PATH"
+
     # ~/workspaces 하위 프로젝트의 .mise.toml도 자동 신뢰
     mise settings set trusted_config_paths "~/workspaces"
 else
@@ -218,23 +222,64 @@ mkdir -p "$HOME/.local/bin"
 create_symlink "$DOTFILES_DIR/scripts/dev" "$HOME/.local/bin/dev"
 
 # ==============================================================================
-# 8. gitconfig.local 생성 (머신별 설정)
+# 8. gitconfig.local 생성 (머신별 설정) + 대화형 git 설정
 # ==============================================================================
 # user.name, user.email, credential helper 등 머신마다 다른 설정을 저장한다.
 # git/.gitconfig 에서 [include] path = ~/.gitconfig.local 로 참조됨.
-# 이미 존재하면 덮어쓰지 않는다.
+# 사용자에게 git 이름과 이메일을 입력받아 자동 설정한다.
 echo "==> Setting up gitconfig.local..."
 GITCONFIG_LOCAL="$HOME/.gitconfig.local"
-if [[ ! -f "$GITCONFIG_LOCAL" ]]; then
-    GH_PATH=""
-    if command -v gh &> /dev/null; then
-        GH_PATH="$(command -v gh)"
-    fi
 
-    cat > "$GITCONFIG_LOCAL" << EOF
+# 이미 설정되어 있는지 확인
+RECONFIGURE=false
+if [[ -f "$GITCONFIG_LOCAL" ]]; then
+    # 기존 설정이 비어있지 않은지 확인
+    GIT_NAME=$(git config --file "$GITCONFIG_LOCAL" user.name 2>/dev/null || echo "")
+    GIT_EMAIL=$(git config --file "$GITCONFIG_LOCAL" user.email 2>/dev/null || echo "")
+
+    if [[ -n "$GIT_NAME" && -n "$GIT_EMAIL" ]]; then
+        echo "    ✓ Git already configured: $GIT_NAME <$GIT_EMAIL>"
+    else
+        echo "    Git configuration incomplete. Updating..."
+        RECONFIGURE=true
+    fi
+else
+    RECONFIGURE=true
+fi
+
+# credential helper 경로 미리 확인 (공통으로 사용)
+GH_PATH=""
+if command -v gh &> /dev/null; then
+    GH_PATH="$(command -v gh)"
+fi
+
+# Git 설정이 필요한 경우
+if [[ "$RECONFIGURE" == true ]]; then
+    echo ""
+    echo "    Git 설정을 입력해주세요."
+    echo "    (빈 입력으로 건너뛸 수 있습니다. 나중에 설정 가능합니다)"
+    echo ""
+
+    read -p "    Git name: " GIT_NAME_INPUT
+    read -p "    Git email: " GIT_EMAIL_INPUT
+
+    GIT_NAME="${GIT_NAME_INPUT:-}"
+    GIT_EMAIL="${GIT_EMAIL_INPUT:-}"
+
+    if [[ -n "$GIT_NAME" && -n "$GIT_EMAIL" ]]; then
+        # 설정 확인
+        echo ""
+        echo "    설정 확인:"
+        echo "      Name:  $GIT_NAME"
+        echo "      Email: $GIT_EMAIL"
+        read -p "    이대로 진행하시겠습니까? (y/n, 기본값: y) " CONFIRM
+        CONFIRM=${CONFIRM:-y}
+
+        if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]; then
+            cat > "$GITCONFIG_LOCAL" << EOF
 [user]
-	name =
-	email =
+	name = ${GIT_NAME}
+	email = ${GIT_EMAIL}
 [credential "https://github.com"]
 	helper =
 	helper = !${GH_PATH} auth git-credential
@@ -242,9 +287,34 @@ if [[ ! -f "$GITCONFIG_LOCAL" ]]; then
 	helper =
 	helper = !${GH_PATH} auth git-credential
 EOF
-    echo "    Created $GITCONFIG_LOCAL (name/email을 설정하세요)"
-else
-    echo "    $GITCONFIG_LOCAL already exists"
+            echo "    ✓ Git 설정 완료: $GIT_NAME <$GIT_EMAIL>"
+        else
+            # 취소 시 [user] 섹션 없이 credential만 생성
+            # (빈 user.name/email이 git config --global 보다 우선하는 문제 방지)
+            cat > "$GITCONFIG_LOCAL" << EOF
+[credential "https://github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+EOF
+            GIT_NAME=""
+            GIT_EMAIL=""
+            echo "    취소됨. credential helper만 설정했습니다."
+        fi
+    else
+        # 빈 입력으로 건너뜀 — [user] 섹션 없이 credential만 생성
+        cat > "$GITCONFIG_LOCAL" << EOF
+[credential "https://github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+EOF
+        echo "    건너뜀. credential helper만 설정했습니다."
+    fi
 fi
 
 # ==============================================================================
@@ -255,9 +325,19 @@ echo "==> Installation complete!"
 echo ""
 echo "    다음 단계:"
 echo "      1. 터미널 재시작 또는: source ~/.zshrc"
-echo "      2. ~/.gitconfig.local 에서 name/email 설정"
-echo "      3. Neovim 실행 시 플러그인 자동 설치됨"
-echo "      4. tmux 안에서 Ctrl+a → I 로 TPM 플러그인 설치"
+echo "      2. Neovim 실행 시 플러그인 자동 설치됨"
+echo "      3. tmux 안에서 Ctrl+a → I 로 TPM 플러그인 설치"
+echo ""
+echo "    Git 설정 확인:"
+CONFIGURED_NAME=$(git config user.name 2>/dev/null || echo "")
+CONFIGURED_EMAIL=$(git config user.email 2>/dev/null || echo "")
+if [[ -n "$CONFIGURED_NAME" && -n "$CONFIGURED_EMAIL" ]]; then
+    echo "      ✓ $CONFIGURED_NAME <$CONFIGURED_EMAIL>"
+else
+    echo "      ⚠️  설정되지 않음. 다음 명령어로 설정하세요:"
+    echo "      git config --file ~/.gitconfig.local user.name '이름'"
+    echo "      git config --file ~/.gitconfig.local user.email 'email@example.com'"
+fi
 echo ""
 echo "    주요 명령어:"
 echo "      dev              # 현재 디렉토리에서 개발 세션 시작"
