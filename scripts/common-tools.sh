@@ -53,7 +53,7 @@ fi
 # 설정은 dotfiles/starship/starship.toml → ~/.config/starship.toml 로 링크됨.
 if ! command -v starship &> /dev/null; then
     echo "==> Installing starship..."
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$HOME/.local/bin"
     echo "    starship installed"
 else
     echo "==> starship already installed"

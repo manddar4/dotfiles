@@ -391,11 +391,21 @@ fi
 # 첫 실행 시 'claude login' 으로 인증 필요 (브라우저 OAuth)
 # 또는 ANTHROPIC_API_KEY 환경 변수를 ~/.zshrc 에 설정
 tmux new-session -d -s "$TMUX_SESSION" -n "code" -c "$TARGET_PATH"
-tmux send-keys -t "=$TMUX_SESSION:code" "claude" Enter
+if command -v claude &> /dev/null; then
+    tmux send-keys -t "=$TMUX_SESSION:code" "claude" Enter
+else
+    echo "⚠️  claude 명령어를 찾을 수 없습니다."
+    echo "   설치: bun add -g @anthropic-ai/claude-code"
+fi
 
 # 창 2: gemini - Gemini CLI 어시스턴트 실행
 tmux new-window -t "=$TMUX_SESSION" -n "gemini" -c "$TARGET_PATH"
-tmux send-keys -t "=$TMUX_SESSION:gemini" "gemini" Enter
+if command -v gemini &> /dev/null; then
+    tmux send-keys -t "=$TMUX_SESSION:gemini" "gemini" Enter
+else
+    echo "⚠️  gemini 명령어를 찾을 수 없습니다."
+    echo "   설치: bun add -g @google/generative-ai-cli"
+fi
 
 # 창 3: term - 빈 셸 (일반 명령 실행용)
 tmux new-window -t "=$TMUX_SESSION" -n "term" -c "$TARGET_PATH"
