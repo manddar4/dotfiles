@@ -7,7 +7,7 @@
 # 각 도구를 설치하기 전에 이미 설치되어 있는지 확인하고, 있으면 건너뜀.
 # install.sh 에서 자동으로 호출되며, 단독 실행도 가능하다.
 #
-# 설치 목록:
+# Linux 전용 설치 목록 (apt, .deb, 바이너리 등):
 #   [apt]           build-essential, curl, wget, unzip, tree, xclip,
 #                   fd-find, bat, ripgrep
 #   [GitHub 릴리즈] Neovim stable (AppImage)
@@ -16,7 +16,10 @@
 #   [tar.gz]        lazygit v0.44.1
 #   [apt 공식 저장소] gh (GitHub CLI)
 #   [바이너리]       yq v4.44.3
-#   [curl 설치]     mise (버전 매니저), starship (프롬프트)
+#   [curl 설치]     mise (버전 매니저)
+#
+# 공통 도구 (common-tools.sh에서 설치):
+#   [curl 설치]     starship (프롬프트)
 #   [git clone]     fzf, fzf-tab, Oh My Zsh, zsh-autosuggestions, TPM
 # ==============================================================================
 
@@ -26,6 +29,14 @@ set -e  # 오류 발생 시 즉시 종료
 # PATH에 포함되어 있어 여기 있는 바이너리는 어디서든 실행 가능
 LOCAL_BIN="$HOME/.local/bin"
 mkdir -p "$LOCAL_BIN"
+
+# 아키텍처 감지 (x86_64 / aarch64)
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)  DEB_ARCH="amd64"; BINARY_ARCH="x86_64" ;;
+    aarch64) DEB_ARCH="arm64"; BINARY_ARCH="aarch64" ;;
+    *)       echo "Unsupported architecture: $ARCH"; exit 1 ;;
+esac
 
 echo "==> Installing Linux tools..."
 
@@ -87,7 +98,7 @@ if ! command -v nvim &> /dev/null; then
     NVIM_APPIMAGE="$LOCAL_BIN/nvim.appimage"
 
     # AppImage 다운로드
-    curl -fsSL "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.appimage" \
+    curl -fsSL "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-${BINARY_ARCH}.appimage" \
         -o "$NVIM_APPIMAGE"
     chmod +x "$NVIM_APPIMAGE"
 
@@ -146,8 +157,8 @@ fi
 DELTA_VERSION="0.18.2"
 if ! command -v delta &> /dev/null; then
     echo "==> Installing git-delta $DELTA_VERSION..."
-    DELTA_DEB="/tmp/git-delta_${DELTA_VERSION}_amd64.deb"
-    curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_amd64.deb" \
+    DELTA_DEB="/tmp/git-delta_${DELTA_VERSION}_${DEB_ARCH}.deb"
+    curl -fsSL "https://github.com/dandavison/delta/releases/download/${DELTA_VERSION}/git-delta_${DELTA_VERSION}_${DEB_ARCH}.deb" \
         -o "$DELTA_DEB"
     sudo dpkg -i "$DELTA_DEB"
     rm -f "$DELTA_DEB"
@@ -166,7 +177,7 @@ LAZYGIT_VERSION="0.44.1"
 if ! command -v lazygit &> /dev/null; then
     echo "==> Installing lazygit $LAZYGIT_VERSION..."
     LAZYGIT_TMP="/tmp/lazygit.tar.gz"
-    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" \
+    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_${BINARY_ARCH}.tar.gz" \
         -o "$LAZYGIT_TMP"
     # tar에서 lazygit 바이너리만 추출하여 ~/.local/bin 에 저장
     tar -xzf "$LAZYGIT_TMP" -C "$LOCAL_BIN" lazygit
@@ -207,7 +218,7 @@ fi
 YQ_VERSION="v4.44.3"
 if ! command -v yq &> /dev/null; then
     echo "==> Installing yq $YQ_VERSION..."
-    curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
+    curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${DEB_ARCH}" \
         -o "$LOCAL_BIN/yq"
     chmod +x "$LOCAL_BIN/yq"
     echo "    yq installed"
@@ -232,93 +243,10 @@ else
 fi
 
 # ==============================================================================
-# 9. fzf (퍼지 파인더)
+# 공통 도구 설치 (Oh My Zsh, fzf, starship, fzf-tab, zsh-autosuggestions, TPM)
 # ==============================================================================
-# fzf는 명령줄 퍼지 파인더로, Ctrl+R(히스토리), Ctrl+T(파일), Alt+C(디렉토리)
-# 키 바인딩을 제공한다. ~/.fzf 에 git clone으로 설치하고, install.sh에서
-# ~/.fzf/install 을 실행하여 ~/.fzf.zsh 키 바인딩 파일을 생성한다.
-if [[ ! -d "$HOME/.fzf" ]]; then
-    echo "==> Installing fzf..."
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    echo "    fzf cloned (key bindings will be installed by install.sh)"
-else
-    echo "==> fzf already installed"
-fi
-
-# ==============================================================================
-# 10. Oh My Zsh
-# ==============================================================================
-# Oh My Zsh는 zsh 설정 프레임워크로, 플러그인·테마 관리를 담당한다.
-# RUNZSH=no : 설치 후 zsh로 자동 전환하지 않음 (스크립트 계속 실행)
-# CHSH=no   : 기본 쉘을 자동으로 변경하지 않음
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-    echo "==> Installing Oh My Zsh..."
-    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    echo "    Oh My Zsh installed"
-else
-    echo "==> Oh My Zsh already installed"
-fi
-
-# ==============================================================================
-# 11. starship (프롬프트)
-# ==============================================================================
-# starship은 빠르고 커스터마이즈 가능한 크로스 쉘 프롬프트다.
-# .zshrc 에서 eval "$(starship init zsh)" 으로 활성화된다.
-# 설정은 dotfiles/starship/starship.toml → ~/.config/starship.toml 로 링크됨.
-if ! command -v starship &> /dev/null; then
-    echo "==> Installing starship..."
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
-    echo "    starship installed"
-else
-    echo "==> starship already installed"
-fi
-
-# ==============================================================================
-# 12. fzf-tab (zsh 플러그인, git clone)
-# ==============================================================================
-# fzf-tab은 zsh의 기본 Tab 자동완성 UI를 fzf 인터페이스로 교체한다.
-# Homebrew로 설치할 수 없어 git clone으로 설치한다.
-# .zshrc 에서 source하여 로드한다.
-FZF_TAB_DIR="$HOME/.local/share/fzf-tab"
-if [[ ! -d "$FZF_TAB_DIR" ]]; then
-    echo "==> Installing fzf-tab..."
-    git clone https://github.com/Aloxaf/fzf-tab "$FZF_TAB_DIR"
-    echo "    fzf-tab installed"
-else
-    echo "==> fzf-tab already installed"
-fi
-
-# ==============================================================================
-# 13. zsh-autosuggestions (Oh My Zsh 커스텀 플러그인, git clone)
-# ==============================================================================
-# 히스토리 기반으로 명령어를 회색 텍스트로 미리 제안한다.
-# → 방향키 오른쪽(→) 또는 Ctrl+F 로 제안 수락
-# Oh My Zsh custom 플러그인 디렉토리에 설치하면 plugins=() 목록에 추가만 하면 된다.
-ZSH_AUTOSUGGEST_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
-if [[ ! -d "$ZSH_AUTOSUGGEST_DIR" ]]; then
-    echo "==> Installing zsh-autosuggestions..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_AUTOSUGGEST_DIR"
-    echo "    zsh-autosuggestions installed"
-else
-    echo "==> zsh-autosuggestions already installed"
-fi
-
-# ==============================================================================
-# 14. TPM (Tmux Plugin Manager, git clone)
-# ==============================================================================
-# TPM은 tmux 플러그인을 관리하는 도구다.
-# tmux 내에서 Ctrl+a → I 로 .tmux.conf 에 정의된 플러그인을 설치한다.
-# 현재 .tmux.conf 에서 사용하는 플러그인:
-#   - tmux-resurrect : 세션 저장/복구
-#   - tmux-continuum : 15분마다 자동 저장, 부팅 시 자동 복구
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ ! -d "$TPM_DIR" ]]; then
-    echo "==> Installing TPM (Tmux Plugin Manager)..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    echo "    TPM installed"
-else
-    echo "==> TPM already installed"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common-tools.sh"
 
 # ==============================================================================
 # 완료

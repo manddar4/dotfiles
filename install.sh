@@ -1,17 +1,23 @@
 #!/bin/bash
 
 # ==============================================================================
-# Dotfiles 설치 스크립트 (Linux / WSL2 전용)
+# Dotfiles 설치 스크립트 (Linux / WSL2 / macOS)
 # ==============================================================================
 # 이 스크립트는 멱등적(idempotent)으로 설계되어 있어 반복 실행해도 안전하다.
+# OS를 자동 감지하여 적절한 도구 설치 스크립트를 실행한다.
+#
 # 실행 순서:
-#   1. 도구 설치 (scripts/linux-tools.sh)
-#   2. LazyVim 초기 설정 (nvim/ 디렉토리가 비어있을 때만)
-#   3. 심볼릭 링크 생성 (설정 파일들을 홈 디렉토리에 연결)
-#   4. fzf 키 바인딩 설치
-#   5. mise 버전 매니저 설정
-#   6. bun 글로벌 패키지 설치
-#   7. dev 스크립트 설치
+#   1. OS 감지 (Linux / macOS)
+#   2. 도구 설치 (scripts/linux-tools.sh 또는 scripts/macos-tools.sh)
+#   3. LazyVim 초기 설정 (nvim/ 디렉토리가 비어있을 때만)
+#   4. 심볼릭 링크 생성 (설정 파일들을 홈 디렉토리에 연결)
+#   5. fzf 키 바인딩 설치
+#   6. mise 버전 매니저 설정
+#   7. bun 글로벌 패키지 설치
+#   8. dev 스크립트 설치
+#   9. gitconfig.local 생성 (머신별 설정)
+#
+# Windows: install-windows.ps1 을 사용하세요.
 # ==============================================================================
 
 set -e  # 오류 발생 시 즉시 종료
@@ -19,8 +25,19 @@ set -e  # 오류 발생 시 즉시 종료
 # 이 스크립트가 있는 디렉토리 = dotfiles 루트
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ==============================================================================
+# OS 감지
+# ==============================================================================
+OS_TYPE=""
+case "$(uname -s)" in
+    Linux*)  OS_TYPE="linux" ;;
+    Darwin*) OS_TYPE="macos" ;;
+    *)       echo "Unsupported OS: $(uname -s)"; exit 1 ;;
+esac
+
 echo "==> Dotfiles installation starting..."
 echo "    Dotfiles directory: $DOTFILES_DIR"
+echo "    OS: $OS_TYPE ($(uname -m))"
 
 # ==============================================================================
 # 헬퍼 함수
@@ -48,12 +65,21 @@ create_symlink() {
 }
 
 # ==============================================================================
-# 1. Linux 도구 설치
+# 1. 도구 설치 (OS별 분기)
 # ==============================================================================
-# scripts/linux-tools.sh 에서 apt 패키지, GitHub 릴리즈 바이너리,
-# git clone 플러그인 등을 모두 처리한다.
-echo "==> Installing Linux tools..."
-bash "$DOTFILES_DIR/scripts/linux-tools.sh"
+# Linux: scripts/linux-tools.sh (apt, .deb, AppImage 등)
+# macOS: scripts/macos-tools.sh (Homebrew)
+# 공통 도구는 scripts/common-tools.sh 에서 처리 (각 스크립트가 source)
+case "$OS_TYPE" in
+    linux)
+        echo "==> Installing Linux tools..."
+        bash "$DOTFILES_DIR/scripts/linux-tools.sh"
+        ;;
+    macos)
+        echo "==> Installing macOS tools..."
+        bash "$DOTFILES_DIR/scripts/macos-tools.sh"
+        ;;
+esac
 
 # ==============================================================================
 # 2. LazyVim 초기 설정
@@ -107,6 +133,11 @@ rm -rf "$HOME/.config/nvim"
 ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
 echo "    $HOME/.config/nvim -> $DOTFILES_DIR/nvim"
 
+# ghostty: macOS 전용 터미널 설정 (~/.config/ghostty/config)
+if [[ "$OS_TYPE" == "macos" ]]; then
+    create_symlink "$DOTFILES_DIR/ghostty/config" "$HOME/.config/ghostty/config"
+fi
+
 # ==============================================================================
 # 4. fzf 키 바인딩 및 자동완성 설치
 # ==============================================================================
@@ -115,10 +146,19 @@ echo "    $HOME/.config/nvim -> $DOTFILES_DIR/nvim"
 # --no-update-rc: .zshrc 자동 수정 안 함 (수동으로 source하기 때문)
 # --no-bash --no-fish: zsh만 설정
 echo "==> Setting up fzf key bindings..."
+FZF_INSTALL=""
 if [[ -f "$HOME/.fzf/install" ]]; then
-    "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish
+    FZF_INSTALL="$HOME/.fzf/install"
+elif [[ "$OS_TYPE" == "macos" ]] && command -v brew &> /dev/null; then
+    # Homebrew로 설치한 fzf는 다른 경로에 install 스크립트가 있다
+    BREW_FZF="$(brew --prefix)/opt/fzf/install"
+    [[ -f "$BREW_FZF" ]] && FZF_INSTALL="$BREW_FZF"
+fi
+
+if [[ -n "$FZF_INSTALL" ]]; then
+    "$FZF_INSTALL" --key-bindings --completion --no-update-rc --no-bash --no-fish
 else
-    echo "    fzf not found at ~/.fzf — skipping (run linux-tools.sh first)"
+    echo "    fzf not found — skipping"
 fi
 
 # ==============================================================================
@@ -172,6 +212,36 @@ mkdir -p "$HOME/.local/bin"
 create_symlink "$DOTFILES_DIR/scripts/dev" "$HOME/.local/bin/dev"
 
 # ==============================================================================
+# 8. gitconfig.local 생성 (머신별 설정)
+# ==============================================================================
+# user.name, user.email, credential helper 등 머신마다 다른 설정을 저장한다.
+# git/.gitconfig 에서 [include] path = ~/.gitconfig.local 로 참조됨.
+# 이미 존재하면 덮어쓰지 않는다.
+echo "==> Setting up gitconfig.local..."
+GITCONFIG_LOCAL="$HOME/.gitconfig.local"
+if [[ ! -f "$GITCONFIG_LOCAL" ]]; then
+    GH_PATH=""
+    if command -v gh &> /dev/null; then
+        GH_PATH="$(command -v gh)"
+    fi
+
+    cat > "$GITCONFIG_LOCAL" << EOF
+[user]
+	name =
+	email =
+[credential "https://github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !${GH_PATH} auth git-credential
+EOF
+    echo "    Created $GITCONFIG_LOCAL (name/email을 설정하세요)"
+else
+    echo "    $GITCONFIG_LOCAL already exists"
+fi
+
+# ==============================================================================
 # 완료
 # ==============================================================================
 echo ""
@@ -179,8 +249,9 @@ echo "==> Installation complete!"
 echo ""
 echo "    다음 단계:"
 echo "      1. 터미널 재시작 또는: source ~/.zshrc"
-echo "      2. Neovim 실행 시 플러그인 자동 설치됨"
-echo "      3. tmux 안에서 Ctrl+a → I 로 TPM 플러그인 설치"
+echo "      2. ~/.gitconfig.local 에서 name/email 설정"
+echo "      3. Neovim 실행 시 플러그인 자동 설치됨"
+echo "      4. tmux 안에서 Ctrl+a → I 로 TPM 플러그인 설치"
 echo ""
 echo "    주요 명령어:"
 echo "      dev              # 현재 디렉토리에서 개발 세션 시작"

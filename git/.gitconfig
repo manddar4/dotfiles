@@ -2,12 +2,8 @@
 # Git 글로벌 설정
 # ==============================================================================
 # 이 파일은 dotfiles/git/.gitconfig 에 있으며, ~/.gitconfig 로 심볼릭 링크된다.
-# 사용자별 설정(name, email)은 직접 수정하거나 git config --global 명령으로 덮어쓴다.
+# 사용자별 설정(name, email, credential)은 ~/.gitconfig.local 에서 관리한다.
 # ==============================================================================
-
-[user]
-	name = nobody
-	email = nobody@gmail.com
 
 # ==============================================================================
 # alias: 자주 쓰는 명령어 단축키
@@ -82,9 +78,10 @@
 	# 이동된 코드를 다른 색상으로 표시
 	# 삭제 후 다른 위치에 추가된 코드를 "이동됨"으로 인식하여 구분
 	colorMoved = default
-[credential "https://github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !/usr/bin/gh auth git-credential
+# ==============================================================================
+# include: 머신별 설정 (user, credential 등)
+# ==============================================================================
+# ~/.gitconfig.local 에 user.name, user.email, credential helper 등
+# 머신마다 다른 설정을 넣는다. install.sh / install-windows.ps1 에서 자동 생성.
+[include]
+	path = ~/.gitconfig.local
