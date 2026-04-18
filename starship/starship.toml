@@ -76,7 +76,7 @@ color_yellow = '#f1fa8c' # Yellow (디렉토리 세그먼트)
 # WSL2에서는 Ubuntu 아이콘(󰕈)이 표시된다.
 [os]
 disabled = false
-style = "bg:color_orange fg:color_fg0"
+style = "bg:color_orange fg:color_bg1"
 
 [os.symbols]
 Windows = "󰍲"
@@ -109,8 +109,8 @@ Pop = ""
 # root와 일반 사용자 모두 동일한 스타일(주황색 배경) 적용.
 [username]
 show_always = true
-style_user = "bg:color_orange fg:color_fg0"
-style_root = "bg:color_orange fg:color_fg0"
+style_user = "bg:color_orange fg:color_bg1"
+style_root = "bg:color_orange fg:color_bg1"
 format = '[ $user ]($style)'
 
 # ==============================================================================
@@ -119,7 +119,7 @@ format = '[ $user ]($style)'
 # 현재 작업 디렉토리 경로를 노란색 배경으로 표시한다.
 # 경로가 3단계를 초과하면 앞부분을 …/ 로 생략한다.
 [directory]
-style = "fg:color_fg0 bg:color_yellow"
+style = "fg:color_bg1 bg:color_yellow"
 format = "[ $path ]($style)"
 truncation_length = 3       # 최대 3단계 깊이까지 표시 (이상은 …/ 로 생략)
 truncation_symbol = "…/"    # 생략 기호
@@ -141,7 +141,7 @@ truncation_symbol = "…/"    # 생략 기호
 [git_branch]
 symbol = ""
 style = "bg:color_aqua"
-format = '[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
+format = '[[ $symbol $branch ](fg:color_bg1 bg:color_aqua)]($style)'
 
 # ==============================================================================
 # Git 상태 세그먼트
@@ -151,7 +151,7 @@ format = '[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
 [git_status]
 disabled = true
 style = "bg:color_aqua"
-format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)]($style)'
+format = '[[($all_status$ahead_behind )](fg:color_bg1 bg:color_aqua)]($style)'
 
 # ==============================================================================
 # 언어 버전 세그먼트 (파란색 배경)
@@ -162,52 +162,52 @@ format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)]($style)'
 [nodejs]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [c]
 symbol = " "
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [cpp]
 symbol = " "
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [rust]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [golang]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [php]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [java]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [kotlin]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [haskell]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 [python]
 symbol = ""
 style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
+format = '[[ $symbol( $version) ](fg:color_bg1 bg:color_blue)]($style)'
 
 # ==============================================================================
 # 컨테이너/환경 세그먼트 (어두운 배경)
