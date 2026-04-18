@@ -55,13 +55,10 @@ $tools = @(
     "mise",
     "bun",
     "tree",
-    "gitleaks",
-    "nerd-fonts/JetBrainsMono-NF"
+    "gitleaks"
 )
 foreach ($tool in $tools) {
-    # 버킷 prefix 제거한 이름으로 Get-Command 확인 (e.g. nerd-fonts/JetBrainsMono-NF)
-    $cmdName = ($tool -split '/')[-1]
-    if (-not (Get-Command $cmdName -ErrorAction SilentlyContinue) -and -not (scoop list $cmdName 2>$null | Select-String -Quiet $cmdName)) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
         Write-Host "    Installing $tool..."
         scoop install $tool
     } else {
