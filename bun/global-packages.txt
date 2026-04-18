@@ -12,3 +12,8 @@
 # 설치 후 'claude' 명령으로 실행
 # 초기 인증: claude login (브라우저 OAuth) 또는 ANTHROPIC_API_KEY 환경 변수 설정
 @anthropic-ai/claude-code
+
+# Gemini CLI: Google 공식 AI 코딩 어시스턴트 CLI
+# 설치 후 'gemini' 명령으로 실행
+# 초기 인증: gemini (첫 실행 시 브라우저 OAuth)
+@google/gemini-cli

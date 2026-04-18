@@ -49,6 +49,8 @@ Windows 네이티브에서는 tmux, Oh My Zsh, dev 스크립트를 사용할 수
 ### Linux / macOS (install.sh)
 - `zsh/.zshrc` → `~/.zshrc`
 - `git/.gitconfig` → `~/.gitconfig`
+- `git/.gitignore_global` → `~/.gitignore_global` (시크릿·OS 파일 전역 ignore)
+- `git/git-templates/` → `~/.git-templates/` (gitleaks pre-commit 훅 자동 배포)
 - `starship/starship.toml` → `~/.config/starship.toml`
 - `tmux/.tmux.conf` → `~/.tmux.conf`
 - `nvim/` → `~/.config/nvim` (full directory, LazyVim)
@@ -58,6 +60,8 @@ Windows 네이티브에서는 tmux, Oh My Zsh, dev 스크립트를 사용할 수
 
 ### Windows (install-windows.ps1)
 - `git/.gitconfig` → `~/.gitconfig`
+- `git/.gitignore_global` → `~/.gitignore_global`
+- `git/git-templates/` → `~/.git-templates/`
 - `starship/starship.toml` → `~/.config/starship.toml`
 - `nvim/` → `~/AppData/Local/nvim`
 - `mise/.mise.toml` → `~/.mise.toml`
@@ -69,6 +73,12 @@ Windows 네이티브에서는 tmux, Oh My Zsh, dev 스크립트를 사용할 수
 - `[include] path = ~/.gitconfig.local` 로 참조
 - `~/.gitconfig.local`은 install 스크립트에서 자동 생성 (user.name, email, credential helper)
 - `.gitconfig.local`은 git에 커밋하지 않음
+
+### Secret scanning (gitleaks pre-commit hook)
+
+`git/git-templates/hooks/pre-commit`가 `~/.git-templates/`로 링크되며, `git init` 시 새 저장소의 `.git/hooks/`에 자동 복사된다. 훅은 `gitleaks protect --staged` 로 스테이징된 변경에서 시크릿을 탐지하고, 발견되면 커밋을 차단한다. false positive는 `git commit --no-verify`로 우회 가능.
+
+기존 저장소(이 훅이 설치되기 전에 만든 repo)에는 자동 적용되지 않으므로 필요 시 `git init` 재실행 또는 수동 복사.
 
 ## The `dev` Script (`scripts/dev`)
 
@@ -113,6 +123,7 @@ New tool configs should follow this convention.
 - **Editor**: Neovim (LazyVim) — config in `nvim/`
 - **Terminal**: Cursor built-in terminal (WSL2), Windows Terminal (Windows)
 - **Git diffs**: delta with side-by-side view
+- **Secret scanning**: gitleaks (pre-commit 훅, git template으로 모든 신규 repo에 자동 적용)
 - **ls replacement**: eza (aliased as `ls`)
 - **Version manager**: mise (replaces nvm, etc.)
 - **Completion**: fzf-tab (Tab → fzf UI), zsh-autosuggestions (history suggestions)

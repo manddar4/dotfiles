@@ -16,6 +16,7 @@
 #   [tar.gz]        lazygit v0.44.1
 #   [apt 공식 저장소] gh (GitHub CLI)
 #   [바이너리]       yq v4.44.3
+#   [tar.gz]        gitleaks v8.30.1
 #   [curl 설치]     mise (버전 매니저)
 #   [GitHub 릴리즈] JetBrainsMono Nerd Font v3.3.0
 #
@@ -231,7 +232,31 @@ else
 fi
 
 # ==============================================================================
-# 8. mise (버전 매니저)
+# 8. gitleaks (GitHub 릴리즈)
+# ==============================================================================
+# gitleaks는 커밋 전 시크릿을 스캔하는 도구다.
+# git/git-templates/hooks/pre-commit 훅에서 호출되어 AWS key, API token 등의
+# 실수 커밋을 차단한다. 릴리즈 asset 이름은 x86_64 → x64, aarch64 → arm64 사용.
+GITLEAKS_VERSION="8.30.1"
+if ! command -v gitleaks &> /dev/null; then
+    echo "==> Installing gitleaks $GITLEAKS_VERSION..."
+    case "$ARCH" in
+        x86_64)  GL_ARCH="x64" ;;
+        aarch64) GL_ARCH="arm64" ;;
+    esac
+    GITLEAKS_TMP="/tmp/gitleaks.tar.gz"
+    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GL_ARCH}.tar.gz" \
+        -o "$GITLEAKS_TMP"
+    tar -xzf "$GITLEAKS_TMP" -C "$LOCAL_BIN" gitleaks
+    chmod +x "$LOCAL_BIN/gitleaks"
+    rm -f "$GITLEAKS_TMP"
+    echo "    gitleaks installed"
+else
+    echo "==> gitleaks already installed"
+fi
+
+# ==============================================================================
+# 9. mise (버전 매니저)
 # ==============================================================================
 # mise는 Node.js, Bun, pnpm 등 언어 런타임의 버전을 관리한다.
 # nvm, rbenv, pyenv를 대체하는 통합 버전 매니저다.

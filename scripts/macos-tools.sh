@@ -9,7 +9,8 @@
 #
 # 설치 목록:
 #   [brew]          neovim, eza, git-delta, lazygit, gh, yq, fzf, bat,
-#                   ripgrep, fd, tmux, tree
+#                   ripgrep, fd, tmux, tree, gitleaks
+#   [brew cask]     ghostty, font-jetbrains-mono-nerd-font, gcloud-cli
 #   [curl 설치]     mise (버전 매니저)
 #   [common-tools]  starship, fzf-tab, Oh My Zsh, zsh-autosuggestions, TPM
 # ==============================================================================
@@ -72,6 +73,7 @@ fi
 #   fd        : find 대체 도구. 직관적 문법, 빠른 검색
 #   tmux      : 터미널 멀티플렉서. 세션·윈도우·패인 관리
 #   tree      : 디렉토리 구조를 트리 형태로 출력
+#   gitleaks  : 시크릿 스캐너. ~/.git-templates/hooks/pre-commit 에서 호출됨
 echo "==> [brew] Installing packages..."
 brew install \
     neovim \
@@ -85,7 +87,8 @@ brew install \
     ripgrep \
     fd \
     tmux \
-    tree
+    tree \
+    gitleaks
 
 # ==============================================================================
 # 2-1. Ghostty (터미널 에뮬레이터, cask)
@@ -109,6 +112,17 @@ if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
     brew install --cask font-jetbrains-mono-nerd-font
 else
     echo "==> JetBrainsMono Nerd Font already installed"
+fi
+
+# ==============================================================================
+# 2-3. Google Cloud SDK (cask)
+# ==============================================================================
+# gcloud 명령을 제공하는 Google Cloud 공식 SDK.
+if ! brew list --cask gcloud-cli &>/dev/null; then
+    echo "==> [brew cask] Installing Google Cloud SDK..."
+    brew install --cask gcloud-cli
+else
+    echo "==> gcloud-cli already installed"
 fi
 
 # ==============================================================================

@@ -54,10 +54,14 @@ $tools = @(
     "starship",
     "mise",
     "bun",
-    "tree"
+    "tree",
+    "gitleaks",
+    "nerd-fonts/JetBrainsMono-NF"
 )
 foreach ($tool in $tools) {
-    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+    # 버킷 prefix 제거한 이름으로 Get-Command 확인 (e.g. nerd-fonts/JetBrainsMono-NF)
+    $cmdName = ($tool -split '/')[-1]
+    if (-not (Get-Command $cmdName -ErrorAction SilentlyContinue) -and -not (scoop list $cmdName 2>$null | Select-String -Quiet $cmdName)) {
         Write-Host "    Installing $tool..."
         scoop install $tool
     } else {
@@ -102,6 +106,12 @@ Write-Host "==> Creating symbolic links..."
 
 # Git 설정
 Create-Symlink "$DotfilesDir\git\.gitconfig" "$env:USERPROFILE\.gitconfig"
+
+# Git 글로벌 gitignore
+Create-Symlink "$DotfilesDir\git\.gitignore_global" "$env:USERPROFILE\.gitignore_global"
+
+# Git template 디렉토리 (pre-commit 훅 포함 — gitleaks 시크릿 스캔)
+Create-Symlink "$DotfilesDir\git\git-templates" "$env:USERPROFILE\.git-templates"
 
 # Starship 설정
 Create-Symlink "$DotfilesDir\starship\starship.toml" "$env:USERPROFILE\.config\starship.toml"

@@ -1,0 +1,24 @@
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+client_secret*.json
+token.json
+
+# OS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/settings.local.json

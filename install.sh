@@ -122,6 +122,23 @@ create_symlink "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 # git: 글로벌 git 설정 (~/.gitconfig)
 create_symlink "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
 
+# git: 글로벌 gitignore (~/.gitignore_global)
+# .gitconfig 의 core.excludesfile 이 가리키는 파일. 시크릿/OS 파일 커밋 방지.
+create_symlink "$DOTFILES_DIR/git/.gitignore_global" "$HOME/.gitignore_global"
+
+# git: template 디렉토리 (~/.git-templates)
+# .gitconfig 의 init.templateDir 이 가리키는 경로. 새 저장소 git init 시
+# hooks/pre-commit 이 자동 복사되어 gitleaks 시크릿 스캔을 수행한다.
+# 디렉토리 통째로 링크하므로 create_symlink 대신 직접 처리 (nvim 패턴과 동일).
+if [[ -d "$HOME/.git-templates" ]] && [[ ! -L "$HOME/.git-templates" ]]; then
+    mv "$HOME/.git-templates" "$HOME/.git-templates.backup.$(date +%Y%m%d%H%M%S)"
+fi
+rm -rf "$HOME/.git-templates"
+# pre-commit 훅의 실행 비트 보장 (Git이 일반적으로 유지하지만 안전장치)
+chmod +x "$DOTFILES_DIR/git/git-templates/hooks/pre-commit"
+ln -sf "$DOTFILES_DIR/git/git-templates" "$HOME/.git-templates"
+echo "    $HOME/.git-templates -> $DOTFILES_DIR/git/git-templates"
+
 # starship: 프롬프트 설정 (~/.config/starship.toml)
 create_symlink "$DOTFILES_DIR/starship/starship.toml" "$HOME/.config/starship.toml"
 
