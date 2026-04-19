@@ -1,21 +1,46 @@
 # install-windows.ps1
 # Windows 네이티브 환경 설치 스크립트 (PowerShell + Scoop)
 # 관리자 권한 없이 실행 가능. 멱등적(idempotent) 설계.
+# PowerShell 7(pwsh) 전용 — profile.ps1이 PSReadLine 최신 API와 mise activate pwsh 등을 사용.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# PowerShell 7 가드: $PROFILE 경로와 프로필 API가 5.1과 달라 반드시 pwsh로 실행해야 한다.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "[ERROR] 이 스크립트는 PowerShell 7 이상에서 실행해야 합니다." -ForegroundColor Red
+    Write-Host "        현재 버전: $($PSVersionTable.PSVersion)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "PowerShell 7 설치 방법 (택 1):" -ForegroundColor Yellow
+    Write-Host "  winget install --id Microsoft.PowerShell --source winget" -ForegroundColor Yellow
+    Write-Host "  또는 https://aka.ms/powershell-release-windows 에서 수동 설치" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "설치 후 'pwsh'로 셸을 연 뒤 이 스크립트를 다시 실행하세요." -ForegroundColor Yellow
+    exit 1
+}
 
 $DotfilesDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host "==> Dotfiles installation starting (Windows)..."
 Write-Host "    Dotfiles directory: $DotfilesDir"
+Write-Host "    PowerShell: $($PSVersionTable.PSVersion)"
 
 # --- Helper ---
 function Create-Symlink {
     param([string]$Source, [string]$Target)
     $parentDir = Split-Path -Parent $Target
     if (-not (Test-Path $parentDir)) { New-Item -ItemType Directory -Path $parentDir -Force | Out-Null }
-    if (Test-Path $Target) { Remove-Item $Target -Force -Recurse }
+    if (Test-Path $Target) {
+        $item = Get-Item $Target -Force
+        $isSymlink = ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+        # 이미 심볼릭 링크면 그대로 교체한다. 실제 파일/디렉토리면 백업을 남긴 뒤 제거한다.
+        if (-not $isSymlink) {
+            $backupPath = "$Target.bak.$(Get-Date -Format 'yyyyMMddHHmmss')"
+            Write-Host "    Backing up: $Target -> $backupPath" -ForegroundColor Cyan
+            Copy-Item $Target $backupPath -Recurse -Force
+        }
+        Remove-Item $Target -Force -Recurse
+    }
     try {
         New-Item -ItemType SymbolicLink -Path $Target -Target $Source -Force | Out-Null
         Write-Host "    $Target -> $Source"
@@ -57,20 +82,50 @@ $tools = @(
     "tree",
     "gitleaks"
 )
+
+# 설치 여부는 `scoop export`의 JSON에서 판정한다.
+# Get-Command 방식은 (1) Windows 기본 tree.com을 탐지해 scoop tree 설치를 건너뛰고
+# (2) 실행 파일명이 패키지명과 다른 도구(ripgrep→rg, neovim→nvim)를 오탐지하므로 쓰지 않는다.
+function Get-ScoopInstalledApps {
+    try {
+        $exportJson = scoop export | ConvertFrom-Json -ErrorAction Stop
+        return @($exportJson.apps | ForEach-Object { $_.Name })
+    } catch {
+        Write-Host "    [WARN] scoop export 파싱 실패. 모든 도구에 대해 install 재시도합니다." -ForegroundColor Yellow
+        return @()
+    }
+}
+$installedApps = Get-ScoopInstalledApps
+
 foreach ($tool in $tools) {
-    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+    if ($installedApps -contains $tool) {
+        Write-Host "    $tool already installed"
+    } else {
         Write-Host "    Installing $tool..."
         scoop install $tool
-    } else {
-        Write-Host "    $tool already installed"
     }
+}
+
+# 3-a. PSFzf 모듈 설치 (fzf Ctrl+t / Ctrl+r 키 바인딩 활성화에 필요)
+# fzf CLI가 있어도 PSFzf 모듈이 없으면 profile.ps1의 키 바인딩 블록이 스킵된다.
+Write-Host "==> Installing PSFzf module..."
+if (-not (Get-Module -ListAvailable -Name PSFzf)) {
+    try {
+        Install-Module -Name PSFzf -Scope CurrentUser -Force -AllowClobber
+        Write-Host "    PSFzf installed"
+    } catch {
+        Write-Host "    [WARN] PSFzf 설치 실패: $_" -ForegroundColor Yellow
+        Write-Host "    수동 설치: Install-Module -Name PSFzf -Scope CurrentUser" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "    PSFzf already installed"
 }
 
 # 4. JetBrainsMono Nerd Font
 # Starship, tmux, LazyVim 등이 Nerd Font 전용 글리프를 사용하므로 반드시 필요하다.
 # nerd-fonts 버킷은 위 2번 단계에서 이미 추가되어 있다.
 Write-Host "==> Installing JetBrainsMono Nerd Font..."
-if (-not (scoop list | Select-String "JetBrainsMono-NF")) {
+if ($installedApps -notcontains "JetBrainsMono-NF") {
     scoop install JetBrainsMono-NF
     Write-Host "    JetBrainsMono Nerd Font installed"
 } else {
@@ -83,7 +138,10 @@ Create-Symlink "$DotfilesDir\mise\.mise.toml" "$env:USERPROFILE\.mise.toml"
 if (Get-Command mise -ErrorAction SilentlyContinue) {
     mise install
     mise trust "$env:USERPROFILE\.mise.toml"
-    mise settings set trusted_config_paths "~/workspaces"
+    # 이 경로 하위의 .mise.toml은 자동으로 trust되어 `mise trust` 수동 확인이 생략된다.
+    # Windows 기본 작업 경로(D:\workspace) 기준. 다른 경로를 쓰면 이 줄을 조정하거나
+    # `mise settings add trusted_config_paths <path>`로 추가한다.
+    mise settings set trusted_config_paths "D:/workspace"
 }
 
 # 6. bun 글로벌 패키지
@@ -116,12 +174,7 @@ Create-Symlink "$DotfilesDir\starship\starship.toml" "$env:USERPROFILE\.config\s
 # Neovim 설정
 Create-Symlink "$DotfilesDir\nvim" "$env:LOCALAPPDATA\nvim"
 
-# PowerShell 프로파일 (기존 프로파일이 심볼릭 링크가 아닌 실제 파일이면 백업)
-if ((Test-Path $PROFILE) -and -not ((Get-Item $PROFILE).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-    $backupPath = "$PROFILE.bak.$(Get-Date -Format 'yyyyMMddHHmmss')"
-    Copy-Item $PROFILE $backupPath
-    Write-Host "    Backed up existing profile to $backupPath"
-}
+# PowerShell 프로파일 (기존 파일/디렉토리는 Create-Symlink가 .bak.<timestamp>로 자동 백업)
 Create-Symlink "$DotfilesDir\powershell\profile.ps1" $PROFILE
 
 # 8. gitconfig.local 생성
@@ -145,12 +198,19 @@ if (-not (Test-Path $gitconfigLocal)) {
     Write-Host "    Created $gitconfigLocal (edit name/email)"
 }
 
-# 9. Windows Terminal 설정 (존재하면)
-$wtSettingsDir = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState"
-if (Test-Path $wtSettingsDir) {
-    Write-Host "==> Windows Terminal settings found"
+# 9. Windows Terminal 설정 (Stable / Preview 경로 모두 시도)
+$wtCandidates = @(
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState",
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState"
+)
+$wtSettingsDir = $wtCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($wtSettingsDir) {
+    Write-Host "==> Windows Terminal settings found: $wtSettingsDir"
     Write-Host "    To apply Dracula theme, merge windows-terminal/settings.json manually"
     Write-Host "    or copy: Copy-Item '$DotfilesDir\windows-terminal\settings.json' '$wtSettingsDir\settings.json'"
+} else {
+    Write-Host "==> Windows Terminal (Stable/Preview) not detected"
+    Write-Host "    If installed later, manually copy: $DotfilesDir\windows-terminal\settings.json" -ForegroundColor Yellow
 }
 
 # 완료

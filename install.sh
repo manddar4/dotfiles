@@ -200,8 +200,8 @@ if command -v mise &> /dev/null; then
     eval "$(mise activate bash)"
     export PATH="$HOME/.local/share/mise/shims:$PATH"
 
-    # ~/workspaces 하위 프로젝트의 .mise.toml도 자동 신뢰
-    mise settings set trusted_config_paths "~/workspaces"
+    # ~/workspace 하위 프로젝트의 .mise.toml도 자동 신뢰
+    mise settings set trusted_config_paths "~/workspace"
 else
     echo "    mise not found — skipping (run linux-tools.sh first)"
 fi

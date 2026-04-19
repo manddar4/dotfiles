@@ -86,5 +86,5 @@ if (Get-Command bun -ErrorAction SilentlyContinue) {
 # Starship 프롬프트 초기화 (반드시 마지막에 위치)
 # ==============================================================================
 if (Get-Command starship -ErrorAction SilentlyContinue) {
-    Invoke-Expression (&starship init powershell)
+    Invoke-Expression (&starship init powershell | Out-String)
 }
